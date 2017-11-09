@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">Running Data</string>
+    <string-array name="vibrate_options">
+        <item>Vibr Never</item>
+        <item>Vibr 0.1</item>
+        <item>Vibr 0.2</item>
+        <item>Vibr 0.5</item>
+        <item>Vibr 1.0</item>
+    </string-array>
+    <string-array name="voice_options">
+        <item>Talk Never</item>
+        <item>Talk 0.5</item>
+        <item>Talk 1.0</item>
+        <item>Talk 2.0</item>
+    </string-array>
+    <string-array name="gps_options">
+        <item>Gps 1s</item>
+        <item>Gps 2s</item>
+        <item>Gps 5s</item>
+        <item>Gps 10s</item>
+    </string-array>
+    <string name="title_activity_settings">Running Data</string>
+    <string name="title_activity_oauth">OauthActivity</string>
+    <!--
+    This string is used for square devices and overridden by hello_world in
+    values-round/strings.xml for round devices.
+    -->
+    <string name="hello_world">Hello Square World!</string>
+    <string name="title_activity_upload">UploadActivity</string>
+</resources>

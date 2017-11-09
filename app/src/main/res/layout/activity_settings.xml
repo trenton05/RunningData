@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<android.support.wear.widget.BoxInsetLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_grey"
+    android:padding="@dimen/box_inset_layout_padding"
+    tools:context="ht.albrec.runningdata.RunningDataActivity"
+    tools:deviceIds="wear">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        </GridLayout>
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="@dimen/inner_frame_layout_padding"
+        app:boxedEdges="all">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" >
+
+                <Button
+                    android:id="@+id/startButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="36dp"
+                    android:text="Start" />
+
+                <ToggleButton
+                    android:id="@+id/speedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:text="ToggleButton"
+                    android:textOff="Pace"
+                    android:textOn="Speed" />
+
+                <ToggleButton
+                    android:id="@+id/metricToggle"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:checked="true"
+                    android:textOff="Imperial"
+                    android:textOn="Metric" />
+
+                <ToggleButton
+                    android:id="@+id/stravaButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:text="ToggleButton"
+                    android:textOff="Strava Login"
+                    android:textOn="Strava Logout" />
+
+                <Spinner
+                    android:id="@+id/vibrateSpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:entries="@array/vibrate_options" />
+
+                <Spinner
+                    android:id="@+id/voiceSpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:entries="@array/voice_options" />
+
+                <Spinner
+                    android:id="@+id/gpsSpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:entries="@array/gps_options" />
+            </LinearLayout>
+        </ScrollView>
+
+    </FrameLayout>
+</android.support.wear.widget.BoxInsetLayout>
+
