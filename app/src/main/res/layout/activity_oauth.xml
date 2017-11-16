@@ -20,7 +20,7 @@
             android:id="@+id/textView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Authorizing on phone..." />
+            android:text="@string/authorizing" />
     </FrameLayout>
 </android.support.wear.widget.BoxInsetLayout>
 

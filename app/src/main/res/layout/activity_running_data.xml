@@ -30,8 +30,8 @@
                 android:layout_height="36dp"
                 android:layout_column="1"
                 android:layout_row="0"
-                android:textOff="Resume"
-                android:textOn="Pause" />
+                android:textOff="@string/resume"
+                android:textOn="@string/pause" />
 
             <Button
                 android:id="@+id/closeButton"
@@ -39,7 +39,7 @@
                 android:layout_height="36dp"
                 android:layout_column="1"
                 android:layout_row="6"
-                android:text="Close" />
+                android:text="@string/finish" />
 
             <Space
                 android:layout_width="54dp"
@@ -113,7 +113,7 @@
                 android:layout_height="wrap_content"
                 android:layout_column="0"
                 android:layout_row="5"
-                android:text="dist"
+                android:text="@string/dist"
                 android:textSize="20dp"
                 android:textAlignment="textEnd" />
 
@@ -133,7 +133,7 @@
                 android:layout_height="wrap_content"
                 android:layout_column="0"
                 android:layout_row="4"
-                android:text="time"
+                android:text="@string/time"
                 android:textSize="20dp"
                 android:textAlignment="textEnd" />
 
@@ -153,7 +153,7 @@
                 android:layout_height="wrap_content"
                 android:layout_column="2"
                 android:layout_row="5"
-                android:text="gps"
+                android:text="@string/gps"
                 android:textSize="20dp" />
 
             <TextView
@@ -173,7 +173,7 @@
                 android:layout_column="2"
                 android:layout_row="3"
                 android:textSize="20dp"
-                android:text="bat" />
+                android:text="@string/bat" />
 
             <TextView
                 android:id="@+id/batValue"
@@ -191,7 +191,7 @@
                 android:layout_column="2"
                 android:layout_row="1"
                 android:textSize="20dp"
-                android:text="HR" />
+                android:text="@string/hr" />
 
             <TextView
                 android:id="@+id/hrValue"

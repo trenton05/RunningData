@@ -66,6 +66,13 @@ public class DataPoint {
         start.distance = mid.distance(start);
     }
 
+    public static void interpolate(DataPoint start, DataPoint end, double ratio) {
+        start.px += (end.px - start.px) * ratio;
+        start.py += (end.py - start.py) * ratio;
+        start.pz += (end.pz - start.pz) * ratio;
+        start.time += (long) ((end.time - start.time) * ratio);
+    }
+
     public long getDuration() {
         return duration;
     }
@@ -103,18 +110,65 @@ public class DataPoint {
     }
 
     public double distance(DataPoint o) {
-        double R = 6371;
+        return distance(px, py, pz, o.px, o.py, o.pz);
+    }
 
-        double latDistance = Math.toRadians(o.py - py);
-        double lonDistance = Math.toRadians(o.px - px);
-        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                + Math.cos(Math.toRadians(o.py)) * Math.cos(Math.toRadians(py))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        double distance = R * c * 1000; // convert to meters
+    public static double distance(double px, double py, double pz, double opx, double opy, double opz) {
+        double dist;
+        double rLong = 6378137.0;
+        double rLat = 6356752.0;
 
-        double height = o.pz - pz;
+        double lat1 = Math.toRadians(py);
+        double lat2 = Math.toRadians(opy);
+        double lon1 = Math.toRadians(px);
+        double lon2 = Math.toRadians(opx);
 
-        return Math.sqrt(distance * distance + height * height);
+        if (Math.abs(py - opy) >= 1.0) {
+            double f = (rLong - rLat) / rLong;
+
+            double b1 = Math.atan2((1.0 - f) * Math.sin(lat1), Math.cos(lat1));
+            double b2 = Math.atan2((1.0 - f) * Math.cos(lat2), Math.cos(lat2));
+
+            double p = 0.5 * (b1 + b2);
+            double q = 0.5 * (b2 - b1);
+
+            double slat = Math.sin((lat2 - lat1) * 0.5);
+            double slon = Math.sin((lon2 - lon1) * 0.5);
+            double a = slat * slat + Math.cos(lat1) * Math.cos(lat2) * slon * slon;
+            double c = 2.0 * Math.atan2(Math.sqrt(a), Math.sqrt(1.0 - a));
+
+            double sc = Math.sin(c);
+            double sp = Math.sin(p);
+            double sq = Math.sin(q);
+            double sc2 = Math.sin(c * 0.5);
+            double x = (c - sc) * sp * sp * (1.0 - sq * sq) / (1.0 - sc2 * sc2);
+            double y = (c + sc) * (1.0 - sp * sp) * sq * sq / (sc2 * sc2);
+
+            dist = rLong * (c - 0.5 * f * (x + y));
+        } else {
+            double e = (rLong * rLong - rLat * rLat) / (rLat * rLat);
+
+            double cp = Math.cos(lat1);
+            double a = Math.sqrt(1.0 + e * cp * cp * cp * cp);
+            double b = Math.sqrt(1.0 + e * cp * cp);
+
+            double dlonp = a * (lon2 - lon1);
+            double l1p = Math.atan2(Math.sin(lat1), Math.cos(lat1) * b);
+            double l2p = Math.atan2(Math.sin(lat2), Math.cos(lat2) * b);
+            double rp = rLong * Math.sqrt(1.0 + e) / (b * b);
+
+            double dlatp = (lat2 - lat1) / b * (1 + 3 * e / (4 * b * b) * (lat2 - lat1) * Math.sin(2.0 * lat1 + 2.0 * (lat2 - lat1) / 3.0));
+
+            double slon = Math.sin(dlonp * 0.5);
+            double slat = Math.sin(dlatp * 0.5);
+
+            double h = slat * slat + Math.cos(l1p) * Math.cos(l2p) * slon * slon;
+            double c = 2.0 * Math.atan2(Math.sqrt(h), Math.sqrt(1.0 - h));
+
+            dist = rp * c;
+        }
+
+        double dz = pz - opz;
+        return Math.sqrt(dist * dist + dz * dz);
     }
 }

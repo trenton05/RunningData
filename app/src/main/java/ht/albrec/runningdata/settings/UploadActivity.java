@@ -46,7 +46,7 @@ public class UploadActivity extends WearableActivity {
         setAmbientEnabled();
 
         textView = (TextView) findViewById(R.id.statusText);
-        textView.setText("Finding network...");
+        textView.setText(getString(R.string.upload_network));
         token = getIntent().getStringExtra("token");
 
 
@@ -62,7 +62,7 @@ public class UploadActivity extends WearableActivity {
                     listen();
                 } else {
                     Log.e("UploadActivity", "Unable to bind network");
-                    textView.setText("Unable to bind network");
+                    textView.setText(getString(R.string.upload_network_failed, "Unable to bind network"));
                 }
             }
         };
@@ -82,7 +82,7 @@ public class UploadActivity extends WearableActivity {
             try {
                 connectivityManager.requestNetwork(request, networkCallback);
             } catch (Exception e) {
-                textView.setText("Unable to request network: " + e.getMessage());
+                textView.setText(getString(R.string.upload_network_failed, e.getMessage()));
             }
         }
     }
@@ -98,12 +98,12 @@ public class UploadActivity extends WearableActivity {
     }
 
     private void listen() {
-        textView.setText("Listening for activity name...");
+        textView.setText(getString(R.string.upload_listen));
 
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
-        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak your activity's name");
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, getString(R.string.upload_listen));
         startActivityForResult(intent, MY_CHECK_SPEECH);
     }
 
@@ -124,12 +124,12 @@ public class UploadActivity extends WearableActivity {
 
     private void upload() {
         if (network == null) {
-            textView.setText("Waiting for network");
+            textView.setText(getString(R.string.upload_network));
             return;
         } else if (name == null) {
             return;
         }
-        textView.setText("Uploading " + ("".equals(name) ? "Data" : name));
+        textView.setText(getString(R.string.upload_name, name));
 
         ExecutorService executor = Executors.newCachedThreadPool();
         executor.submit(new Runnable() {
@@ -137,7 +137,7 @@ public class UploadActivity extends WearableActivity {
             public void run() {
                 boolean hasFailures = false;
                 for (String file: fileList()) {
-                    boolean failed = false;
+                    Exception firstError = null;
                     while (token != null && file.startsWith(FILE_PREFIX)) {
                         try {
                             Log.d("UploadActivity", "Uploading: " + file);
@@ -148,24 +148,25 @@ public class UploadActivity extends WearableActivity {
                             uploader.addFormField("activity_type", file.indexOf("-ride") != -1 ? "ride" : "run");
                             uploader.addFormField("data_type", "gpx");
                             // If failed, maybe missing ending xml bad file
-                            uploader.addFilePart("file", getFileStreamPath(file), failed ? "</trkseg></trk></gpx>" : null, "text/xml; charset=UTF-8");
-                            uploader.finish();
+                            uploader.addFilePart("file", getFileStreamPath(file), firstError != null ? "</trkseg></trk></gpx>" : null, "text/xml; charset=UTF-8");
+                            uploader.finish(firstError != null);
                             deleteFile(file);
                             Log.d("UploadActivity", "Uploaded: " + file);
                             break;
                         } catch (final Exception e) {
                             Log.e("upload()", "failed to upload", e);
-                            if (failed) {
+                            if (firstError != null) {
+                                final String message = firstError.getMessage();
                                 handler.post(new Runnable() {
                                     @Override
                                     public void run() {
-                                        textView.setText("Failed: " + e.getMessage());
+                                        textView.setText(getString(R.string.upload_network_failed, message));
                                     }
                                 });
                                 hasFailures = true;
                                 break;
                             }
-                            failed = true;
+                            firstError = e;
                         }
                     }
                 }
@@ -174,7 +175,7 @@ public class UploadActivity extends WearableActivity {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            textView.setText("Success");
+                            textView.setText(getString(R.string.upload_success));
                             finish();
                         }
                     });

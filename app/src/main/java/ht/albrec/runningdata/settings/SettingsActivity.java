@@ -36,6 +36,7 @@ public class SettingsActivity extends WearableActivity {
     private Spinner vibrateSpinner;
     private Spinner voiceSpinner;
     private Spinner gpsSpinner;
+    private Spinner batterySpinner;
     private Button startButton;
 
     @Override
@@ -54,6 +55,7 @@ public class SettingsActivity extends WearableActivity {
         vibrateSpinner = findViewById(R.id.vibrateSpinner);
         voiceSpinner = findViewById(R.id.voiceSpinner);
         gpsSpinner = findViewById(R.id.gpsSpinner);
+        batterySpinner = findViewById(R.id.batterySpinner);
 
         restoreSettings();
 
@@ -175,6 +177,36 @@ public class SettingsActivity extends WearableActivity {
 
             }
         });
+        batterySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                switch (position) {
+                    case 0:
+                        settings.setLowBattery(1);
+                        break;
+                    case 1:
+                        settings.setLowBattery(2);
+                        break;
+                    case 2:
+                        settings.setLowBattery(5);
+                        break;
+                    case 3:
+                        settings.setLowBattery(10);
+                        break;
+                    case 4:
+                        settings.setLowBattery(15);
+                        break;
+                    case 5:
+                        settings.setLowBattery(25);
+                        break;
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
     }
 
     @Override
@@ -237,6 +269,27 @@ public class SettingsActivity extends WearableActivity {
                 gpsSpinner.setSelection(1);
                 break;
         }
+
+        switch (settings.getLowBattery()) {
+            case 1:
+                batterySpinner.setSelection(0);
+                break;
+            case 5:
+                batterySpinner.setSelection(2);
+                break;
+            case 10:
+                batterySpinner.setSelection(3);
+                break;
+            case 15:
+                batterySpinner.setSelection(4);
+                break;
+            case 25:
+                batterySpinner.setSelection(5);
+                break;
+            default:
+                batterySpinner.setSelection(1);
+                break;
+        }
     }
 
 
@@ -257,7 +310,7 @@ public class SettingsActivity extends WearableActivity {
         try {
             FileInputStream fis = openFileInput(TOKEN_FILE);
             try {
-                settings = (Settings) new ObjectInputStream(fis).readObject();
+                settings = Settings.fromString(Util.readInput(fis));
             } finally {
                 fis.close();
             }
@@ -269,9 +322,7 @@ public class SettingsActivity extends WearableActivity {
     private void saveSettings() {
         try {
             FileOutputStream fos = openFileOutput(TOKEN_FILE, Context.MODE_PRIVATE);
-            ObjectOutputStream out = new ObjectOutputStream(fos);
-            out.writeObject(settings);
-            out.close();
+            fos.write(settings.toString().getBytes());
             fos.close();
         } catch (IOException e) {
             Log.e("saveToken()", "Unable to save token", e);

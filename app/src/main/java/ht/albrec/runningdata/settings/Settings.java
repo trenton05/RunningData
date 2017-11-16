@@ -1,5 +1,8 @@
 package ht.albrec.runningdata.settings;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.Serializable;
 
 public class Settings implements Serializable {
@@ -9,6 +12,7 @@ public class Settings implements Serializable {
     private int vibrateEvery = 1;
     private int voiceEvery = 5;
     private int gpsEvery = 2;
+    private int lowBattery = 2;
     private String token = null;
 
     public boolean isMetric() {
@@ -57,5 +61,50 @@ public class Settings implements Serializable {
 
     public void setGpsEvery(int gpsEvery) {
         this.gpsEvery = gpsEvery;
+    }
+
+    public int getLowBattery() {
+        return lowBattery;
+    }
+
+    public void setLowBattery(int lowBattery) {
+        this.lowBattery = lowBattery;
+    }
+
+    public String toString() {
+        try {
+            JSONObject json = new JSONObject();
+            json.put("metric", metric);
+            json.put("speed", speed);
+            json.put("vibrateEvery", vibrateEvery);
+            json.put("voiceEvery", voiceEvery);
+            json.put("gpsEvery", gpsEvery);
+            json.put("token", token);
+            json.put("lowBattery", lowBattery);
+            return json.toString();
+        } catch (JSONException e) {
+            return "{}";
+        }
+    }
+
+    public static Settings fromString(String str) {
+        if (str == null || "".equals(str)) {
+            return new Settings();
+        }
+
+        try {
+            Settings settings = new Settings();
+            JSONObject json = new JSONObject(str);
+            settings.setMetric(json.optBoolean("metric", settings.isMetric()));
+            settings.setSpeed(json.optBoolean("speed", settings.isSpeed()));
+            settings.setVibrateEvery(json.optInt("vibrateEvery", settings.getVibrateEvery()));
+            settings.setVoiceEvery(json.optInt("voiceEvery", settings.getVoiceEvery()));
+            settings.setGpsEvery(json.optInt("gpsEvery", settings.getGpsEvery()));
+            settings.setLowBattery(json.optInt("lowBattery", settings.getLowBattery()));
+            settings.setToken(json.optString("token", settings.getToken()));
+            return settings;
+        } catch (Exception e) {
+            return new Settings();
+        }
     }
 }

@@ -6,14 +6,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.location.LocationManager;
-import android.location.LocationProvider;
 import android.os.BatteryManager;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.os.Vibrator;
-import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.wearable.activity.WearableActivity;
@@ -29,8 +30,6 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,16 +40,23 @@ import ht.albrec.runningdata.settings.UploadActivity;
 
 public class RunningDataActivity extends WearableActivity {
     private static final int MY_CHECK_TTS = 0;
-    private static final double TARGET_BATTERY = 0.02;
     public static final String FILE_PREFIX = "running-data-";
 
+    private boolean ambient = false;
     private long startTime = System.currentTimeMillis();
     private double startBattery = 0.0;
+    private long batteryTime = System.currentTimeMillis();
     private double battery = 0.0;
 
     private SensorManager sensorManager;
     private Sensor heartRateSensor;
     private HeartRateTracker heartRateTracker;
+
+//    private Sensor rotationSensor;
+//    private SensorEventListener rotationListener;
+//
+//    private PowerManager powerManager;
+//    private PowerManager.WakeLock wakeLock;
 
     private LocationTracker locationTracker;
 
@@ -84,6 +90,7 @@ public class RunningDataActivity extends WearableActivity {
     private TextView hrValue;
 
     private BroadcastReceiver batteryReceiver;
+    private static final String FINAL_UTTERANCE = "ht.albrec.runningdata.FINAL_UTTERANCE";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,13 +111,13 @@ public class RunningDataActivity extends WearableActivity {
         closeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                stop(true);
+                stop(null);
             }
         });
 
-        ((TextView) findViewById(R.id.allLabel)).setText(settings.isMetric() ? "*km" : "*mi");
-        ((TextView) findViewById(R.id.kmLabel)).setText(settings.isMetric() ? "1km" : "1mi");
-        ((TextView) findViewById(R.id.hmLabel)).setText(settings.isMetric() ? "0.1km" : "0.1mi");
+        ((TextView) findViewById(R.id.allLabel)).setText("*" + getString(settings.isMetric() ? R.string.km : R.string.mi));
+        ((TextView) findViewById(R.id.kmLabel)).setText("1" + getString(settings.isMetric() ? R.string.km : R.string.mi));
+        ((TextView) findViewById(R.id.hmLabel)).setText("0.1" + getString(settings.isMetric() ? R.string.km : R.string.mi));
 
         allValue = findViewById(R.id.allValue);
         kmValue = findViewById(R.id.kmValue);
@@ -123,12 +130,11 @@ public class RunningDataActivity extends WearableActivity {
 
         closeButton.setVisibility(View.INVISIBLE);
 
-        kmSummary = new LocationSummary(settings.isMetric() ? 1000.0 : 1600.0, 0);
-        hmSummary = new LocationSummary(settings.isMetric() ? 100.0 : 160.0, 0);
+        kmSummary = new LocationSummary(settings.isMetric() ? 1000.0 : 1609.34, 0);
+        hmSummary = new LocationSummary(settings.isMetric() ? 100.0 : 160.934, 0);
 
         // Enables Always-on
         setAmbientEnabled();
-
 
         file = FILE_PREFIX + System.currentTimeMillis() + (settings.isSpeed() ? "-ride" : "-run") + ".gpx";
 
@@ -140,13 +146,6 @@ public class RunningDataActivity extends WearableActivity {
             Log.e("RunningDataActivity", "TTS not found");
         }
 
-        Runnable refresh = new Runnable() {
-            @Override
-            public void run() {
-                updateText();
-            }
-        };
-
         startTime = System.currentTimeMillis();
         batteryReceiver = new BroadcastReceiver() {
             @Override
@@ -154,19 +153,24 @@ public class RunningDataActivity extends WearableActivity {
                 int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
                 int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
 
-                battery = level / (double) scale;
-                if (startBattery == 0.0) {
-                    startBattery = battery;
-                }
-                Log.d("RunningDataActivity", "Battery: " + battery);
-                updateText();
+                double newBattery = level / (double) scale;
+                if (newBattery != battery) {
+                    if (battery == 0.0) {
+                        battery = newBattery;
+                    } else {
+                        battery = newBattery;
+                        batteryTime = System.currentTimeMillis();
+                        if (startBattery == 0.0) {
+                            startBattery = battery;
+                            startTime = System.currentTimeMillis();
+                        }
+                    }
+                    Log.d("RunningDataActivity", "Battery: " + battery);
+                    updateText(false);
 
-                if (battery <= TARGET_BATTERY) {
-                    toggleRunning(false);
-                    stop(false);
-
-                    if (tts != null) {
-                        tts.speak("Battery low stopping", TextToSpeech.QUEUE_FLUSH, null);
+                    if (battery * 100 <= settings.getLowBattery()) {
+                        toggleRunning(false);
+                        stop("Battery low stopping");
                     }
                 }
             }
@@ -180,7 +184,12 @@ public class RunningDataActivity extends WearableActivity {
 
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
-        heartRateTracker = new HeartRateTracker(refresh);
+        heartRateTracker = new HeartRateTracker(new Runnable() {
+            @Override
+            public void run() {
+                updateText(false);
+            }
+        });
 
         List<String> neededPermissions = new ArrayList<>();
 
@@ -189,7 +198,63 @@ public class RunningDataActivity extends WearableActivity {
             neededPermissions.add("android.permissions.BODY_SENSORS");
         }
 
-        locationTracker = new LocationTracker(heartRateTracker, refresh, new LocationTracker.LocationUpdated() {
+//        powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+//        rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+//        rotationListener = new SensorEventListener() {
+//            private double lastPitch;
+//
+//            @Override
+//            public void onSensorChanged(SensorEvent event) {
+//                if (event.values.length > 4) {
+//                    float[] truncatedRotationVectors = new float[4];
+//                    System.arraycopy(event.values, 0, truncatedRotationVectors, 0, 4);
+//                    onRotationChange(truncatedRotationVectors);
+//                }
+//            }
+//
+//            protected void onRotationChange(float[] vectors) {
+//                float[] rotationMatrix = new float[9], adjustedMatrix = new float[9], orientation = new float[3];
+//                SensorManager.getRotationMatrixFromVector(rotationMatrix, vectors);
+//                SensorManager.remapCoordinateSystem(rotationMatrix, SensorManager.AXIS_X, SensorManager.AXIS_Z, adjustedMatrix);
+//                SensorManager.getOrientation(adjustedMatrix, orientation);
+//
+//                double pitch = orientation[1] * 180 / Math.PI, roll = orientation[2] * 180 / Math.PI;
+//                if (roll <= -90 || roll >= 90) {
+//                    if (pitch >= 0) {
+//                        pitch = 180 - pitch;
+//                    } else {
+//                        pitch = -180 - pitch;
+//                    }
+//                }
+//                if (distance(lastPitch, pitch) >= 135) {
+//                    lastPitch = pitch;
+//                    wakeLock = powerManager.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK,
+//                            "MyWakelockTag");
+//                    wakeLock.acquire();
+//                    wakeLock.release();
+//                }
+//            }
+//
+//            private double distance(double a1, double a2) {
+//                double diff = Math.min(Math.abs(a1 - a2 + 360), Math.min(Math.abs(a1 - a2 - 360), Math.abs(a1 - a2)));
+//                return diff;
+//            }
+//
+//            @Override
+//            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+//
+//            }
+//        };
+//        sensorManager.registerListener(rotationListener, rotationSensor, SensorManager.SENSOR_DELAY_UI);
+
+
+        locationTracker = new LocationTracker(heartRateTracker, new Runnable() {
+            @Override
+            public void run() {
+                updateExternal();
+                updateText(false);
+            }
+        }, new LocationTracker.LocationUpdated() {
             @Override
             public void onDataPoint(DataPoint point) {
                 if (data == null) {
@@ -205,6 +270,8 @@ public class RunningDataActivity extends WearableActivity {
                 allSummary.addPoint(point);
                 kmSummary.addPoint(point);
                 hmSummary.addPoint(point);
+
+                updateExternal();
             }
         });
 
@@ -261,6 +328,23 @@ public class RunningDataActivity extends WearableActivity {
         locationTracker.setRunning(true);
     }
 
+    private void updateExternal() {
+        double pendingDistance = locationTracker.getPendingDistance();
+        long pendingDuration = locationTracker.getPendingDuration();
+
+        int newVibrate = getVibrateKey(pendingDistance, pendingDuration);
+        int newVoice = getVoiceKey(pendingDistance, pendingDuration);
+
+        if (newVibrate > lastVibrate) {
+            lastVibrate = newVibrate;
+            vibrator.vibrate(500);
+        }
+        if (newVoice > lastVoice && tts != null) {
+            lastVoice = newVoice;
+            tts.speak(getVoiceText(pendingDistance, pendingDuration), TextToSpeech.QUEUE_FLUSH, null);
+        }
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -273,6 +357,7 @@ public class RunningDataActivity extends WearableActivity {
         unregisterReceiver(batteryReceiver);
         googleApiClient.disconnect();
         sensorManager.unregisterListener(heartRateTracker);
+//        sensorManager.unregisterListener(rotationListener);
     }
 
     @Override
@@ -294,17 +379,9 @@ public class RunningDataActivity extends WearableActivity {
         }
     }
 
-    private void updateText() {
-        int newVibrate = getVibrateKey();
-        int newVoice = getVoiceKey();
-
-        if (newVibrate != lastVibrate) {
-            lastVibrate = newVibrate;
-            vibrator.vibrate(500);
-        }
-        if (newVoice != lastVoice && tts != null) {
-            lastVoice = newVoice;
-            tts.speak(getVoiceText(), TextToSpeech.QUEUE_FLUSH, null);
+    private void updateText(boolean force) {
+        if (!force && ambient) {
+            return;
         }
 
         double pendingDistance = locationTracker.getPendingDistance();
@@ -323,35 +400,30 @@ public class RunningDataActivity extends WearableActivity {
             errValue.setText(String.valueOf((int) locationTracker.getLocation().getAccuracy()) + "m");
         }
 
-        if (startBattery == battery) {
+        if (startBattery == battery || startBattery == 0.0) {
             batValue.setText(battery == 0.0 ? "" : String.valueOf((int) (battery * 100.0)) + "%");
         } else {
-            int secondsRemaining = (int) ((System.currentTimeMillis() - startTime) / (startBattery - battery) * (battery - TARGET_BATTERY) / 1000);
+            int secondsRemaining = (int) ((batteryTime - startTime) / (startBattery - battery) * (battery - settings.getLowBattery() / 100.0) - (System.currentTimeMillis() - batteryTime)) / 1000;
             batValue.setText((secondsRemaining / 60) + ":" + (secondsRemaining % 60 < 10 ? "0" : "") + (secondsRemaining % 60));
         }
         hrValue.setText(String.valueOf((int) heartRateTracker.getHeartRate()));
     }
 
     private String getDistanceText(double dist) {
-        dist /= 1000.0;
-        int whole = (int) dist;
-        int part = ((int)(dist * 100.0) % 100);
-        return whole + "." + (part < 10 ? "0" : "") + part + " " + (settings.isMetric() ? "km" : "mi");
+        double distance = dist / (settings.isMetric() ? 1000.0 : 1609.34);
+        return getString(settings.isMetric() ? R.string.kmv : R.string.miv, distance);
     }
 
     private String getSpeedText(double dist, long time) {
-        double speed = dist / (settings.isMetric() ? 1000.0 : 1600.0) / (time / (double) 3600000);
-
-        int whole = (int) speed;
-        int part = ((int) (speed * 10) % 10);
-        return whole + "." + part + " " + (settings.isMetric() ? "kmh" : "mph");
+        double speed = time == 0 ? 0.0 : dist / (settings.isMetric() ? 1000.0 : 1609.34) / (time / (double) 3600000);
+        return getString(settings.isMetric() ? R.string.kph : R.string.mph, speed);
     }
 
     private String getTimeText(long time, double distance) {
         if (distance == 0.0) {
             return "Forever";
         }
-        long realTime = (long) (time / (distance / (settings.isMetric() ? 1000.0 : 1600.0)));
+        long realTime = (long) (time / (distance / (settings.isMetric() ? 1000.0 : 1609.34)));
         return getTimeText(realTime);
     }
 
@@ -363,20 +435,68 @@ public class RunningDataActivity extends WearableActivity {
         return hours + ":" + (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
     }
 
-    private String getVoiceText() {
+    private String getVoiceText(double pendingDistance, long pendingDuration) {
+        String text = getString(settings.isMetric() ? R.string.voice_text_metric : R.string.voice_text_imperial);
+        String[] parts = text.split(" ");
         StringBuilder sb = new StringBuilder();
-        sb.append("distance ").append(getDistanceVoice(allSummary.getDistance()));
-        sb.append(" duration ").append(getTimeVoice(allSummary.getDuration()));
-        sb.append(" last " + (settings.isMetric() ? "kilometer" : "mile")).append(settings.isSpeed() ? getSpeedVoice(kmSummary.getDistance(), kmSummary.getDuration())
-                : getTimeVoice(kmSummary.getDuration()));
+        for (String part: parts) {
+            if (sb.length() > 0) {
+                sb.append(' ');
+            }
+            if (part.startsWith("$")) {
+                sb.append(evaluate(part.substring(1), pendingDistance, pendingDuration));
+            } else {
+                sb.append(part);
+            }
+        }
         return sb.toString();
     }
 
+    private String evaluate(String part, double pendingDistance, long pendingDuration) {
+        int pi = part.indexOf('.');
+        if (pi == -1) {
+            return part;
+        }
+
+        LocationSummary summary;
+        switch (part.substring(0, pi)) {
+            case "all":
+                summary = allSummary;
+                break;
+            case "km":
+            case "mi":
+                summary = kmSummary;
+                break;
+            case "hm":
+                summary = hmSummary;
+            default:
+                return part;
+        }
+        switch (part.substring(pi + 1)) {
+            case "time":
+                return settings.isSpeed() ? getSpeedVoice(summary.getDistance() + pendingDistance, summary.getDuration() + pendingDuration)
+                        : getTimeVoice(summary.getDuration() + pendingDuration, summary.getDistance() + pendingDistance);
+            case "distance":
+                return getDistanceVoice(summary.getDistance() + pendingDistance);
+            case "duration":
+                return getTimeVoice(summary.getDuration() + pendingDuration);
+            default:
+                return part;
+        }
+    }
+
     private String getDistanceVoice(double distance) {
-        double n = distance / (settings.isMetric() ? 1000.0 : 1600.0);
-        int whole = (int) n;
-        int part = ((int) (n * 10) % 10);
-        return whole + "." + part + " " + (settings.isMetric() ? "kilometers" : "miles");
+        double n = distance / (settings.isMetric() ? 1000.0 : 1609.34);
+        return getString(settings.isMetric() ? R.string.kilometers : R.string.miles, n);
+    }
+
+    private String getTimeVoice(long time, double distance) {
+        if (distance == 0.0) {
+            return getString(R.string.forever);
+        }
+
+        long realTime = (long) (time / (distance / (settings.isMetric() ? 1000.0 : 1609.34)));
+        return getTimeVoice(realTime);
     }
 
     private String getTimeVoice(long time) {
@@ -384,16 +504,14 @@ public class RunningDataActivity extends WearableActivity {
         long hours = seconds / 3600;
         long minutes = (seconds / 60) % 60;
         seconds = seconds % 60;
-        return (hours > 0 ? hours + " " + (hours == 1 ? "hour" : "hours") : "")
-                + (minutes > 0 ? minutes + " " + (minutes == 1 ? "minute" : "minutes") : "")
-                + (seconds > 0 ? seconds + " " + (seconds == 1 ? "second" : "seconds") : "");
+        return (hours > 0 ? getString(hours == 1 ? R.string.hour : R.string.hours, hours) : "")
+                + (minutes > 0 ? getString(hours == 1 ? R.string.minute : R.string.minutes, minutes) : "")
+                + (seconds > 0 ? getString(hours == 1 ? R.string.second : R.string.seconds, seconds) : "");
     }
 
     private String getSpeedVoice(double distance, long time) {
-        double speed = distance / (settings.isMetric() ? 1000.0 : 1600.0) / (time / (double) 3600000);
-        int whole = (int) speed;
-        int part = ((int) (speed * 10) % 10);
-        return whole + "." + part + " " + (settings.isMetric() ? "kilometers per hour" : "miles per hour");
+        double speed = distance / (settings.isMetric() ? 1000.0 : 1609.34) / (time / (double) 3600000);
+        return getString(settings.isMetric() ? R.string.kilometers_per_hour : R.string.miles_per_hour, speed);
     }
 
     public void toggleRunning(boolean running) {
@@ -407,28 +525,36 @@ public class RunningDataActivity extends WearableActivity {
         }
     }
 
-    public void stop(boolean prompt) {
+    public void stop(String prompt) {
         locationTracker.setRunning(false);
 
         if (data != null) {
             data.close();
         }
-        finish();
+        if (prompt != null) {
+            if (tts != null) {
+                tts.speak(prompt, TextToSpeech.QUEUE_FLUSH, null, FINAL_UTTERANCE);
+            } else {
+                finish();
+            }
+        } else {
+            finish();
 
-        if (settings.getToken() != null && prompt) {
-            Intent intent = new Intent(this, UploadActivity.class);
-            intent.putExtra("token", settings.getToken());
-            startActivity(intent);
+            if (settings.getToken() != null) {
+                Intent intent = new Intent(this, UploadActivity.class);
+                intent.putExtra("token", settings.getToken());
+                startActivity(intent);
+            }
         }
     }
 
 
-    private int getVibrateKey() {
-        return settings.getVibrateEvery() == 0 ? 0 : (int) (allSummary.getDistance() / (settings.isMetric() ? 100.0 : 160.0) / settings.getVibrateEvery());
+    private int getVibrateKey(double pendingDistance, long pendingDuration) {
+        return settings.getVibrateEvery() == 0 ? 0 : (int) ((allSummary.getDistance() + pendingDistance) / (settings.isMetric() ? 100.0 : 160.934) / settings.getVibrateEvery());
     }
 
-    private int getVoiceKey() {
-        return settings.getVoiceEvery() == 0 ? 0 : (int) (allSummary.getDistance() / (settings.isMetric() ? 100.0 : 160.0) / settings.getVoiceEvery());
+    private int getVoiceKey(double pendingDistance, long pendingDuration) {
+        return settings.getVoiceEvery() == 0 ? 0 : (int) ((allSummary.getDistance() + pendingDistance) / (settings.isMetric() ? 100.0 : 160.934) / settings.getVoiceEvery());
     }
 
     protected void onActivityResult(
@@ -438,11 +564,59 @@ public class RunningDataActivity extends WearableActivity {
                 tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
                     @Override
                     public void onInit(int i) {
-                        tts.setLanguage(Locale.US);
+                        String localeString = getString(R.string.locale);
+                        Locale locale = localeString == null ? null : Locale.forLanguageTag(localeString);
+                        if (locale != null && tts.isLanguageAvailable(locale) == TextToSpeech.LANG_AVAILABLE) {
+                            tts.setLanguage(locale);
+                            tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                                @Override
+                                public void onStart(String utteranceId) {
+
+                                }
+
+                                @Override
+                                public void onDone(String utteranceId) {
+                                    if (FINAL_UTTERANCE.equals(utteranceId)) {
+                                        finish();
+                                    }
+                                }
+
+                                @Override
+                                public void onError(String utteranceId) {
+                                    if (FINAL_UTTERANCE.equals(utteranceId)) {
+                                        finish();
+                                    }
+                                }
+                            });
+                        } else {
+                            Log.e("RunningDataActivity", "Unable to set language " + locale);
+                            tts.shutdown();
+                            tts = null;
+                        }
                     }
                 });
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public void onEnterAmbient(Bundle ambientDetails) {
+        super.onEnterAmbient(ambientDetails);
+        ambient = true;
+        updateText(true);
+    }
+
+    @Override
+    public void onUpdateAmbient() {
+        super.onUpdateAmbient();
+        updateText(true);
+    }
+
+    @Override
+    public void onExitAmbient() {
+        super.onExitAmbient();
+        updateText(true);
+        ambient = false;
     }
 }

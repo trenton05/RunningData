@@ -1,5 +1,59 @@
 <resources>
     <string name="app_name">Running Data</string>
+    <string name="hours">%d hours</string>
+    <string name="hour">%d hour</string>
+    <string name="minutes">%d minutes</string>
+    <string name="minute">%d minute</string>
+    <string name="seconds">%d seconds</string>
+    <string name="second">%d second</string>
+    <string name="miles_per_hour">%.1f miles per hour</string>
+    <string name="kilometers_per_hour">%.1f miles per hour</string>
+    <string name="mph">%.1f mph</string>
+    <string name="kph">%.1f kph</string>
+    <string name="miles">%.1f miles</string>
+    <string name="kilometers">%.1f kilometers</string>
+    <string name="locale">en</string>
+    <string name="forever">forever</string>
+
+    <string name="km">km</string>
+    <string name="mi">mi</string>
+
+    <string name="kmv">%.2f km</string>
+    <string name="miv">%.2f mi</string>
+
+    <string name="voice_text_metric">distance $all.distance duration $all.duration last kilometer $km.time</string>
+    <string name="voice_text_imperial">distance $all.distance duration $all.duration last mile $km.time</string>
+
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
+    <string name="finish">Finish</string>
+
+    <string name="hr">HR</string>
+    <string name="bat">bat</string>
+    <string name="gps">gps</string>
+    <string name="time">time</string>
+    <string name="dist">dist</string>
+
+    <string name="strava_login">Strava Login</string>
+    <string name="strava_logout">Strava Logout</string>
+
+    <string name="metric">Metric</string>
+    <string name="imperial">Imperial</string>
+
+    <string name="pace">Pace</string>
+    <string name="speed">Speed</string>
+    <string name="start">Start</string>
+
+    <string name="authorizing">Authorizing on phone...</string>
+
+    <string name="upload_network">Finding network...</string>
+    <string name="upload_network_failed">Network failed: %s</string>
+    <string name="upload_listen">Listening for activity name...</string>
+    <string name="upload_name">Uploading %s...</string>
+    <string name="upload_success">Success</string>
+
+    <string name="complication">Complication</string>
+
     <string-array name="vibrate_options">
         <item>Vibr Never</item>
         <item>Vibr 0.1</item>
@@ -19,12 +73,15 @@
         <item>Gps 5s</item>
         <item>Gps 10s</item>
     </string-array>
+    <string-array name="battery_options">
+        <item>Low Bat 1%</item>
+        <item>Low Bat 2%</item>
+        <item>Low Bat 5%</item>
+        <item>Low Bat 10%</item>
+        <item>Low Bat 15%</item>
+        <item>Low Bat 25%</item>
+    </string-array>
     <string name="title_activity_settings">Running Data</string>
-    <string name="title_activity_oauth">OauthActivity</string>
-    <!--
-    This string is used for square devices and overridden by hello_world in
-    values-round/strings.xml for round devices.
-    -->
-    <string name="hello_world">Hello Square World!</string>
-    <string name="title_activity_upload">UploadActivity</string>
+    <string name="title_activity_oauth">Strava Oauth</string>
+    <string name="title_activity_upload">Upload Data</string>
 </resources>

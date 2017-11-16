@@ -137,7 +137,7 @@ public class Uploader {
      * status OK, otherwise an exception is thrown.
      * @throws IOException
      */
-    public String finish() throws IOException {
+    public String finish(boolean ignoreBadRequest) throws IOException {
         String response = null;
 
         writer.append(LINE_FEED).flush();
@@ -151,7 +151,7 @@ public class Uploader {
             httpConn.disconnect();
         } else {
             response = Util.readInput(httpConn.getErrorStream());
-            if (status == 400) {
+            if (status == 400 && ignoreBadRequest) {
                 Log.e("Uploader", "Bad request: " + response);
             } else {
                 throw new IOException("Server returned non-OK status: " + status + ", response: " + response);

@@ -40,31 +40,31 @@
                     android:id="@+id/startButton"
                     android:layout_width="match_parent"
                     android:layout_height="36dp"
-                    android:text="Start" />
+                    android:text="@string/start" />
 
                 <ToggleButton
                     android:id="@+id/speedButton"
                     android:layout_width="match_parent"
                     android:layout_height="38dp"
                     android:text="ToggleButton"
-                    android:textOff="Pace"
-                    android:textOn="Speed" />
+                    android:textOff="@string/pace"
+                    android:textOn="@string/speed" />
 
                 <ToggleButton
                     android:id="@+id/metricToggle"
                     android:layout_width="match_parent"
                     android:layout_height="38dp"
                     android:checked="true"
-                    android:textOff="Imperial"
-                    android:textOn="Metric" />
+                    android:textOff="@string/imperial"
+                    android:textOn="@string/metric" />
 
                 <ToggleButton
                     android:id="@+id/stravaButton"
                     android:layout_width="match_parent"
                     android:layout_height="38dp"
                     android:text="ToggleButton"
-                    android:textOff="Strava Login"
-                    android:textOn="Strava Logout" />
+                    android:textOff="@string/strava_login"
+                    android:textOn="@string/strava_logout" />
 
                 <Spinner
                     android:id="@+id/vibrateSpinner"
@@ -83,6 +83,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:entries="@array/gps_options" />
+
+                <Spinner
+                    android:id="@+id/batterySpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:entries="@array/battery_options" />
             </LinearLayout>
         </ScrollView>
 
