@@ -207,6 +207,8 @@ public class SettingsActivity extends WearableActivity {
 
             }
         });
+
+        requestPermissions(new String[]{"android.permission.BODY_SENSORS", "android.permission.ACCESS_FINE_LOCATION"}, 0);
     }
 
     @Override

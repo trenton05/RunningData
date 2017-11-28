@@ -23,7 +23,7 @@ public class HeartRateTracker implements SensorEventListener {
         if (sensorEvent.sensor.getType() == Sensor.TYPE_HEART_RATE) {
             Log.d("HeartRateTracker", "accuracy: " + sensorEvent.accuracy);
             Log.d("HeartRateTracker", "value: " + (sensorEvent.values.length == 0 ? 0.0 : sensorEvent.values[0]));
-            if (sensorEvent.accuracy >= SensorManager.SENSOR_STATUS_ACCURACY_LOW) {
+            if (sensorEvent.accuracy >= SensorManager.SENSOR_STATUS_UNRELIABLE) {
                 heartRate = sensorEvent.values[0];
                 update.run();
             }

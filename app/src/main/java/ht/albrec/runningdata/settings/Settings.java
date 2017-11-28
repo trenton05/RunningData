@@ -11,7 +11,7 @@ public class Settings implements Serializable {
     private boolean speed = false;
     private int vibrateEvery = 1;
     private int voiceEvery = 5;
-    private int gpsEvery = 2;
+    private int gpsEvery = 1;
     private int lowBattery = 2;
     private String token = null;
 

@@ -1,5 +1,6 @@
 package ht.albrec.runningdata;
 
+import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -191,13 +192,6 @@ public class RunningDataActivity extends WearableActivity {
             }
         });
 
-        List<String> neededPermissions = new ArrayList<>();
-
-        if (!sensorManager.registerListener(heartRateTracker, heartRateSensor, SensorManager.SENSOR_DELAY_NORMAL)) {
-            Log.e("RunningDataActivity", "Unable to register heart rate tracker");
-            neededPermissions.add("android.permissions.BODY_SENSORS");
-        }
-
 //        powerManager = (PowerManager) getSystemService(POWER_SERVICE);
 //        rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
 //        rotationListener = new SensorEventListener() {
@@ -284,6 +278,40 @@ public class RunningDataActivity extends WearableActivity {
             requestPermissions(new String[] { "android.permission.ACCESS_FINE_LOCATION" }, 0);
         }
         */
+
+        Log.d("RunningDataActivity", "Initialized api");
+        toggleButton.setChecked(true);
+        locationTracker.setRunning(true);
+
+        initHeartRate();
+        initLocation();
+    }
+
+    private void updateExternal() {
+        double pendingDistance = locationTracker.getPendingDistance();
+        long pendingDuration = locationTracker.getPendingDuration();
+
+        int newVibrate = getVibrateKey(pendingDistance, pendingDuration);
+        int newVoice = getVoiceKey(pendingDistance, pendingDuration);
+
+        if (newVibrate > lastVibrate) {
+            lastVibrate = newVibrate;
+            vibrator.vibrate(500);
+        }
+        if (newVoice > lastVoice && tts != null) {
+            lastVoice = newVoice;
+            tts.speak(getVoiceText(pendingDistance, pendingDuration), TextToSpeech.QUEUE_FLUSH, null);
+        }
+    }
+
+    private void initHeartRate() {
+        if (!sensorManager.registerListener(heartRateTracker, heartRateSensor, SensorManager.SENSOR_DELAY_NORMAL)) {
+            Log.e("RunningDataActivity", "Unable to register heart rate tracker");
+            hrValue.setText("err");
+        }
+    }
+
+    private void initLocation() {
         googleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
                     @Override
@@ -308,7 +336,8 @@ public class RunningDataActivity extends WearableActivity {
                 .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
                     @Override
                     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-                        Log.e("RunningDataActivity", "Failed to connect api: " + connectionResult.getErrorMessage());
+                        Log.e("RunningDataActivity", "Failed to connect api: " + connectionResult);
+                        errValue.setText("err");
                     }
                 })
                 .addApi(LocationServices.API)
@@ -316,32 +345,8 @@ public class RunningDataActivity extends WearableActivity {
         try {
             googleApiClient.connect();
         } catch (SecurityException e) {
-            neededPermissions.add("android.permission.ACCESS_FINE_LOCATION");
-        }
-
-        if (neededPermissions.size() > 0) {
-            requestPermissions(neededPermissions.toArray(new String[0]), 0);
-        }
-
-        Log.d("RunningDataActivity", "Initialized api");
-        toggleButton.setChecked(true);
-        locationTracker.setRunning(true);
-    }
-
-    private void updateExternal() {
-        double pendingDistance = locationTracker.getPendingDistance();
-        long pendingDuration = locationTracker.getPendingDuration();
-
-        int newVibrate = getVibrateKey(pendingDistance, pendingDuration);
-        int newVoice = getVoiceKey(pendingDistance, pendingDuration);
-
-        if (newVibrate > lastVibrate) {
-            lastVibrate = newVibrate;
-            vibrator.vibrate(500);
-        }
-        if (newVoice > lastVoice && tts != null) {
-            lastVoice = newVoice;
-            tts.speak(getVoiceText(pendingDistance, pendingDuration), TextToSpeech.QUEUE_FLUSH, null);
+            Log.e("RunningDataActivity", "Could not connect to api", e);
+            errValue.setText("err");
         }
     }
 
@@ -355,28 +360,11 @@ public class RunningDataActivity extends WearableActivity {
             data.close();
         }
         unregisterReceiver(batteryReceiver);
-        googleApiClient.disconnect();
+        if (googleApiClient != null) {
+            googleApiClient.disconnect();
+        }
         sensorManager.unregisterListener(heartRateTracker);
 //        sensorManager.unregisterListener(rotationListener);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] resultCode) {
-        for (String permission: permissions) {
-            if ("android.permission.BODY_SENSORS".equals(permission)) {
-                if (!sensorManager.registerListener(heartRateTracker, heartRateSensor, SensorManager.SENSOR_DELAY_NORMAL)) {
-                    Log.e("RunningDataActivity", "Failed to start hr");
-                    hrValue.setText("err");
-                }
-            } else if ("android.permission.ACCESS_FINE_LOCATION".equals(permission)){
-                try {
-                    googleApiClient.connect();
-                } catch (SecurityException e) {
-                    Log.e("RunningDataActivity", "Failed to start gps", e);
-                    errValue.setText("err");
-                }
-            }
-        }
     }
 
     private void updateText(boolean force) {
