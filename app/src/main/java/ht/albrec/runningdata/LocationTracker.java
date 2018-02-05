@@ -8,6 +8,7 @@ import android.util.Log;
 import java.util.LinkedList;
 
 public class LocationTracker implements LocationListener, com.google.android.gms.location.LocationListener {
+    private static final float MIN_ACCURACY = 20.0f;
     public interface LocationUpdated {
         void onDataPoint(DataPoint point);
     }
@@ -19,11 +20,13 @@ public class LocationTracker implements LocationListener, com.google.android.gms
     private boolean running = false;
     private LocationUpdated locationUpdated;
     private Runnable refresh;
+    private int smoothing;
 
-    public LocationTracker(HeartRateTracker heartRateTracker, Runnable refresh, LocationUpdated locationUpdated) {
+    public LocationTracker(HeartRateTracker heartRateTracker, Runnable refresh, LocationUpdated locationUpdated, int smoothing) {
         this.heartRateTracker = heartRateTracker;
         this.refresh = refresh;
         this.locationUpdated = locationUpdated;
+        this.smoothing = smoothing;
     }
 
     public boolean isRunning() {
@@ -45,6 +48,10 @@ public class LocationTracker implements LocationListener, com.google.android.gms
     @Override
     public void onLocationChanged(Location tmp) {
         Log.d("LocationTracker", tmp.toString());
+        if (tmp.getAccuracy() > MIN_ACCURACY) {
+            return;
+        }
+
         DataPoint location = DataPoint.create(tmp, heartRateTracker.getHeartRate());
 
         if (lastLocation == null) {
@@ -73,15 +80,16 @@ public class LocationTracker implements LocationListener, com.google.android.gms
 
             DataPoint first = pendingLocations.getFirst();
             pendingDistance = last.distance(first);
+            pendingTime = last.getTime() - first.getTime();
             while (pendingDistance > 0.5 * (first.getAccuracy() + last.getAccuracy()) && pendingLocations.size() > 2) {
                 pendingLocations.removeFirst();
                 DataPoint next = pendingLocations.getFirst();
-                DataPoint.interpolate(first, next, last);
+                DataPoint.interpolate(first, next, last, smoothing);
+                pendingDistance = last.distance(next);
+                pendingTime = last.getTime() - next.getTime();
                 locationUpdated.onDataPoint(first);
                 first = next;
-                pendingDistance = last.distance(first);
             }
-            pendingTime = last.getTime() - first.getTime();
         }
     }
 
@@ -101,7 +109,7 @@ public class LocationTracker implements LocationListener, com.google.android.gms
             } else {
                 DataPoint next = pendingLocations.getFirst();
                 DataPoint last = pendingLocations.getLast();
-                DataPoint.interpolate(first, next, last);
+                DataPoint.interpolate(first, next, last, smoothing);
                 locationUpdated.onDataPoint(first);
             }
         }

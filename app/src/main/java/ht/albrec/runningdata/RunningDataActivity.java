@@ -267,7 +267,7 @@ public class RunningDataActivity extends WearableActivity {
 
                 updateExternal();
             }
-        });
+        }, settings.getGpsEvery() * 1000);
 
         /*
         try {

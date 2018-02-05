@@ -44,23 +44,29 @@ public class DataPoint {
         return p;
     }
 
-    public static void interpolate(DataPoint start, DataPoint mid, DataPoint end) {
-        //  p0 + v0 t + 1/2 a0 t^2 + 1/6 j t^3 = data
-        // Constant jerk between points
+    public static void interpolate(DataPoint start, DataPoint mid, DataPoint end, int accelTime) {
+        // p0 + v0 td + a0 ta (1/2 ta + tv) = data
         long td = end.time - start.time;
-        double ax = 2.0 * (end.px - start.px - start.vx * td) / (td * td);
-        double ay = 2.0 * (end.py - start.py - start.vy * td) / (td * td);
-        double az = 2.0 * (end.pz - start.pz - start.vz * td) / (td * td);
+        long ta = Math.min(td, accelTime);
+        long tv = td - ta;
+
+        double inv = 1.0 / (ta * (0.5 * ta + tv));
+        double ax = (end.px - start.px - start.vx * td) * inv;
+        double ay = (end.py - start.py - start.vy * td) * inv;
+        double az = (end.pz - start.pz - start.vz * td) * inv;
 
         td = mid.time - start.time;
+        ta = Math.min(td, accelTime);
+        tv = td - ta;
 
-        mid.px = start.px + start.vx * td + 0.5 * ax * td * td;
-        mid.py = start.py + start.vy * td + 0.5 * ay * td * td;
-        mid.pz = start.pz + start.vz * td + 0.5 * az * td * td;
+        inv =  (ta * (0.5 * ta + tv));
+        mid.px = start.px + start.vx * td + ax * inv;
+        mid.py = start.py + start.vy * td + ay * inv;
+        mid.pz = start.pz + start.vz * td + az * inv;
 
-        mid.vx = start.vx + ax * td;
-        mid.vy = start.vy + ay * td;
-        mid.vz = start.vz + az * td;
+        mid.vx = start.vx + ax * ta;
+        mid.vy = start.vy + ay * ta;
+        mid.vz = start.vz + az * ta;
 
         start.duration = mid.time - start.time;
         start.distance = mid.distance(start);
