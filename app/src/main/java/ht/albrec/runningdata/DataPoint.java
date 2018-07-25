@@ -17,6 +17,10 @@ public class DataPoint {
 
     private long time;
 
+    private double ix;
+    private double iy;
+    private double iz;
+
     private double px;
     private double py;
     private double pz;
@@ -34,9 +38,9 @@ public class DataPoint {
     public static DataPoint create(Location next, double heartRate) {
         DataPoint p = new DataPoint();
         p.time = next.getTime();
-        p.px = next.getLongitude();
-        p.py = next.getLatitude();
-        p.pz = next.getAltitude();
+        p.ix = p.px = next.getLongitude();
+        p.iy = p.py = next.getLatitude();
+        p.iz = p.pz = next.getAltitude();
         p.accuracy = next.getAccuracy();
         p.heartRate = heartRate;
         p.distance = 0.0;
@@ -73,9 +77,9 @@ public class DataPoint {
     }
 
     public static void interpolate(DataPoint start, DataPoint end, double ratio) {
-        start.px += (end.px - start.px) * ratio;
-        start.py += (end.py - start.py) * ratio;
-        start.pz += (end.pz - start.pz) * ratio;
+        start.ix = start.px += (end.px - start.px) * ratio;
+        start.iy = start.py += (end.py - start.py) * ratio;
+        start.iz = start.pz += (end.pz - start.pz) * ratio;
         start.time += (long) ((end.time - start.time) * ratio);
     }
 
@@ -88,11 +92,11 @@ public class DataPoint {
     }
 
     public double getX() {
-        return px;
+        return ix;
     }
 
     public double getY() {
-        return py;
+        return iy;
     }
 
     public long getTime() {
@@ -108,7 +112,7 @@ public class DataPoint {
     }
 
     public double getElevation() {
-        return pz;
+        return iz;
     }
 
     public String getTimeText() {

@@ -21,6 +21,7 @@ import android.support.annotation.Nullable;
 import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.TextView;
@@ -136,6 +137,7 @@ public class RunningDataActivity extends WearableActivity {
 
         // Enables Always-on
         setAmbientEnabled();
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         file = FILE_PREFIX + System.currentTimeMillis() + (settings.isSpeed() ? "-ride" : "-run") + ".gpx";
 

@@ -48,9 +48,6 @@ public class LocationTracker implements LocationListener, com.google.android.gms
     @Override
     public void onLocationChanged(Location tmp) {
         Log.d("LocationTracker", tmp.toString());
-        if (tmp.getAccuracy() > MIN_ACCURACY) {
-            return;
-        }
 
         DataPoint location = DataPoint.create(tmp, heartRateTracker.getHeartRate());
 
@@ -65,10 +62,9 @@ public class LocationTracker implements LocationListener, com.google.android.gms
                 addLocation(lastLocation);
                 lastAccuracy = 0.0;
             }
-
         }
         lastLocation = location;
-        if (lastAccuracy <= 1) {
+        if (lastAccuracy <= 1 && lastLocation.getAccuracy() <= MIN_ACCURACY) {
             addLocation(lastLocation);
         }
         refresh.run();
