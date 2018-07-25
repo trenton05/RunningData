@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/dark_grey"
+    android:background="@color/black"
     android:padding="@dimen/box_inset_layout_padding"
     tools:context="ht.albrec.runningdata.RunningDataActivity"
     tools:deviceIds="wear">
@@ -54,8 +54,9 @@
                 android:layout_column="0"
                 android:layout_row="1"
                 android:text="*"
-                android:textSize="20dp"
-                android:textAlignment="textEnd" />
+                android:textAlignment="textEnd"
+                android:textColor="@color/white"
+                android:textSize="20dp" />
 
             <TextView
                 android:id="@+id/allValue"
@@ -64,8 +65,9 @@
                 android:layout_column="1"
                 android:layout_row="1"
                 android:paddingLeft="4dp"
-                android:textSize="20dp"
-                android:text="" />
+                android:text=""
+                android:textColor="@color/white"
+                android:textSize="20dp" />
 
             <TextView
                 android:id="@+id/kmLabel"
@@ -74,18 +76,20 @@
                 android:layout_column="0"
                 android:layout_row="2"
                 android:text="km"
-                android:textSize="20dp"
-                android:textAlignment="textEnd" />
+                android:textAlignment="textEnd"
+                android:textColor="@color/white"
+                android:textSize="20dp" />
 
             <TextView
                 android:id="@+id/kmValue"
-                android:paddingLeft="4dp"
                 android:layout_width="108dp"
                 android:layout_height="wrap_content"
                 android:layout_column="1"
                 android:layout_row="2"
-                android:textSize="20dp"
-                android:text="" />
+                android:paddingLeft="4dp"
+                android:text=""
+                android:textColor="@color/white"
+                android:textSize="20dp" />
 
             <TextView
                 android:id="@+id/hmLabel"
@@ -94,18 +98,20 @@
                 android:layout_column="0"
                 android:layout_row="3"
                 android:text="hm"
-                android:textSize="20dp"
-                android:textAlignment="textEnd" />
+                android:textAlignment="textEnd"
+                android:textColor="@color/white"
+                android:textSize="20dp" />
 
             <TextView
                 android:id="@+id/hmValue"
-                android:paddingLeft="4dp"
                 android:layout_width="108dp"
                 android:layout_height="wrap_content"
                 android:layout_column="1"
                 android:layout_row="3"
-                android:textSize="20dp"
-                android:text="" />
+                android:paddingLeft="4dp"
+                android:text=""
+                android:textColor="@color/white"
+                android:textSize="20dp" />
 
             <TextView
                 android:id="@+id/distLabel"
@@ -114,18 +120,20 @@
                 android:layout_column="0"
                 android:layout_row="5"
                 android:text="@string/dist"
-                android:textSize="20dp"
-                android:textAlignment="textEnd" />
+                android:textAlignment="textEnd"
+                android:textColor="@color/white"
+                android:textSize="20dp" />
 
             <TextView
                 android:id="@+id/distValue"
-                android:paddingLeft="4dp"
                 android:layout_width="108dp"
                 android:layout_height="wrap_content"
                 android:layout_column="1"
                 android:layout_row="5"
-                android:textSize="20dp"
-                android:text="" />
+                android:paddingLeft="4dp"
+                android:text=""
+                android:textColor="@color/white"
+                android:textSize="20dp" />
 
             <TextView
                 android:id="@+id/timeLabel"
@@ -134,18 +142,20 @@
                 android:layout_column="0"
                 android:layout_row="4"
                 android:text="@string/time"
-                android:textSize="20dp"
-                android:textAlignment="textEnd" />
+                android:textAlignment="textEnd"
+                android:textColor="@color/white"
+                android:textSize="20dp" />
 
             <TextView
                 android:id="@+id/timeValue"
-                android:paddingLeft="4dp"
                 android:layout_width="108dp"
                 android:layout_height="wrap_content"
                 android:layout_column="1"
                 android:layout_row="4"
-                android:textSize="20dp"
-                android:text="" />
+                android:paddingLeft="4dp"
+                android:text=""
+                android:textColor="@color/white"
+                android:textSize="20dp" />
 
             <TextView
                 android:id="@+id/errLabel"
@@ -154,17 +164,19 @@
                 android:layout_column="2"
                 android:layout_row="5"
                 android:text="@string/gps"
+                android:textColor="@color/white"
                 android:textSize="20dp" />
 
             <TextView
                 android:id="@+id/errValue"
-                android:paddingLeft="4dp"
                 android:layout_width="54dp"
                 android:layout_height="wrap_content"
                 android:layout_column="2"
                 android:layout_row="6"
-                android:textSize="20dp"
-                android:text="" />
+                android:paddingLeft="4dp"
+                android:text=""
+                android:textColor="@color/white"
+                android:textSize="20dp" />
 
             <TextView
                 android:id="@+id/batLabel"
@@ -172,8 +184,9 @@
                 android:layout_height="wrap_content"
                 android:layout_column="2"
                 android:layout_row="3"
-                android:textSize="20dp"
-                android:text="@string/bat" />
+                android:text="@string/bat"
+                android:textColor="@color/white"
+                android:textSize="20dp" />
 
             <TextView
                 android:id="@+id/batValue"
@@ -181,8 +194,9 @@
                 android:layout_height="wrap_content"
                 android:layout_column="2"
                 android:layout_row="4"
-                android:textSize="20dp"
-                android:text="" />
+                android:text=""
+                android:textColor="@color/white"
+                android:textSize="20dp" />
 
             <TextView
                 android:id="@+id/hrLabel"
@@ -190,8 +204,9 @@
                 android:layout_height="wrap_content"
                 android:layout_column="2"
                 android:layout_row="1"
-                android:textSize="20dp"
-                android:text="@string/hr" />
+                android:text="@string/hr"
+                android:textColor="@color/white"
+                android:textSize="20dp" />
 
             <TextView
                 android:id="@+id/hrValue"
@@ -199,8 +214,9 @@
                 android:layout_height="wrap_content"
                 android:layout_column="2"
                 android:layout_row="2"
-                android:textSize="20dp"
-                android:text="" />
+                android:text=""
+                android:textColor="@color/white"
+                android:textSize="20dp" />
 
         </GridLayout>
     </FrameLayout>
