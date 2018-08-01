@@ -1,5 +1,6 @@
 package ht.albrec.runningdata;
 
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -32,6 +33,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -94,9 +96,56 @@ public class RunningDataActivity extends WearableActivity {
     private BroadcastReceiver batteryReceiver;
     private static final String FINAL_UTTERANCE = "ht.albrec.runningdata.FINAL_UTTERANCE";
 
+    static class TopExceptionHandler implements Thread.UncaughtExceptionHandler {
+        private Thread.UncaughtExceptionHandler defaultUEH;
+        private Activity app = null;
+
+        public TopExceptionHandler(Activity app) {
+            this.defaultUEH = Thread.getDefaultUncaughtExceptionHandler();
+            this.app = app;
+        }
+
+        public void uncaughtException(Thread t, Throwable e) {
+            StackTraceElement[] arr = e.getStackTrace();
+            String report = e.toString()+"\n\n";
+            report += "--------- Stack trace ---------\n\n";
+            for (int i=0; i<arr.length; i++) {
+                report += "    "+arr[i].toString()+"\n";
+            }
+            report += "-------------------------------\n\n";
+
+            // If the exception was thrown in a background thread inside
+            // AsyncTask, then the actual exception can be found with getCause
+
+            report += "--------- Cause ---------\n\n";
+            Throwable cause = e.getCause();
+            if(cause != null) {
+                report += cause.toString() + "\n\n";
+                arr = cause.getStackTrace();
+                for (int i=0; i<arr.length; i++) {
+                    report += "    "+arr[i].toString()+"\n";
+                }
+            }
+            report += "-------------------------------\n\n";
+
+            try {
+                FileOutputStream trace = app.openFileOutput("stack.trace",
+                        Context.MODE_PRIVATE);
+                trace.write(report.getBytes());
+                trace.close();
+            } catch(IOException ioe) {
+                // ...
+            }
+
+            defaultUEH.uncaughtException(t, e);
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Thread.setDefaultUncaughtExceptionHandler(new TopExceptionHandler(this));
+
         setContentView(R.layout.activity_running_data);
 
         settings = (Settings) getIntent().getSerializableExtra("settings");

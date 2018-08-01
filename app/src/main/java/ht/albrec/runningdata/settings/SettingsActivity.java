@@ -14,9 +14,12 @@ import android.widget.CompoundButton;
 import android.widget.Spinner;
 import android.widget.ToggleButton;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
@@ -209,6 +212,35 @@ public class SettingsActivity extends WearableActivity {
         });
 
         requestPermissions(new String[]{"android.permission.BODY_SENSORS", "android.permission.ACCESS_FINE_LOCATION"}, 0);
+    }
+
+    private void checkError() {
+        String trace = "";
+        try {
+            String line;
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(SettingsActivity.this.openFileInput("stack.trace")));
+            while((line = reader.readLine()) != null) {
+                trace += line+"\n";
+            }
+        } catch(FileNotFoundException fnfe) {
+            return;
+        } catch(IOException ioe) {
+            return;
+        }
+
+        Intent sendIntent = new Intent(Intent.ACTION_SEND);
+        String subject = "Error report";
+        String body = "Mail this to tralbrecht@gmail.com: " + "\n" + trace + "\n";
+
+        sendIntent.putExtra(Intent.EXTRA_EMAIL, new String[] {"tralbrecht@gmail.com"});
+        sendIntent.putExtra(Intent.EXTRA_TEXT, body);
+        sendIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
+        sendIntent.setType("message/rfc822");
+
+        SettingsActivity.this.startActivity(Intent.createChooser(sendIntent, "Title:"));
+
+        SettingsActivity.this.deleteFile("stack.trace");
     }
 
     @Override
